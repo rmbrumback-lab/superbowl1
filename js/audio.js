@@ -9,14 +9,51 @@ window.SB = window.SB || {};
   let wantMusic = null, musicTimer = null, musicStep = 0, nextNoteT = 0;
   let crowdBase = 0;
 
+  let htmlAudio = null;
+
+  /** A short silent WAV, used to switch iOS into "playback" audio so the silent switch doesn't mute the game. */
+  function silentWav() {
+    const n = 2205, buf = new ArrayBuffer(44 + n), v = new DataView(buf);
+    const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+    w(0, 'RIFF'); v.setUint32(4, 36 + n, true); w(8, 'WAVE'); w(12, 'fmt ');
+    v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, 22050, true); v.setUint32(28, 22050, true); v.setUint16(32, 1, true); v.setUint16(34, 8, true);
+    w(36, 'data'); v.setUint32(40, n, true);
+    for (let i = 0; i < n; i++) v.setUint8(44 + i, 128);
+    let bin = ''; const u = new Uint8Array(buf);
+    for (let i = 0; i < u.length; i++) bin += String.fromCharCode(u[i]);
+    return 'data:audio/wav;base64,' + btoa(bin);
+  }
+
+  /** Called on every press/release. iOS requires audio to start inside a user gesture. */
   function unlock() {
+    // iOS 17+: play through the silent switch like a game/video would.
+    try { if (navigator.audioSession && navigator.audioSession.type !== 'playback') navigator.audioSession.type = 'playback'; } catch (e) { /* unsupported */ }
     if (!ac) {
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return;
       try { ac = new AC(); } catch (e) { return; }
       build();
     }
-    if (ac.state === 'suspended') ac.resume();
+    if (ac.state !== 'running') {
+      try { ac.resume(); } catch (e) { /* ignore */ }
+      // Starting a (silent) sound inside the gesture is what actually unlocks iOS Safari.
+      try {
+        const b = ac.createBuffer(1, 1, 22050), s = ac.createBufferSource();
+        s.buffer = b; s.connect(ac.destination); s.start(0);
+      } catch (e) { /* ignore */ }
+    }
+    // Older iOS: a looping silent <audio> element moves the page to the playback session.
+    if (SB.isIOS && !htmlAudio) {
+      try {
+        htmlAudio = new Audio(silentWav());
+        htmlAudio.loop = true;
+        htmlAudio.setAttribute('playsinline', '');
+        htmlAudio.setAttribute('x-webkit-airplay', 'deny');
+        const p = htmlAudio.play();
+        if (p && p.catch) p.catch(() => { htmlAudio = null; });
+      } catch (e) { htmlAudio = null; }
+    }
   }
 
   function mkGain(v, dest) { const g = ac.createGain(); g.gain.value = v; g.connect(dest); return g; }
@@ -189,6 +226,6 @@ window.SB = window.SB || {};
     return muted;
   }
 
-  SB.audio = { unlock, play, crowd, swell, music, toggleMute, isMuted: () => muted };
+  SB.audio = { unlock, play, crowd, swell, music, toggleMute, isMuted: () => muted, state: () => (ac ? ac.state : 'none') };
   SB.audioUnlock = unlock;
 })(window.SB);

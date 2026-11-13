@@ -10,21 +10,29 @@ window.SB = window.SB || {};
   canvas.height = H;
   ctx.imageSmoothingEnabled = false;
 
-  // ---- Scaling: largest integer multiple of the base resolution that fits. ----
+  // ---- Scaling: fill the screen (minus notch safe areas), keeping 16:9. ----
+  // Use a crisp integer pixel multiple when it fills at least 97% of the space;
+  // otherwise (typical on phones) scale fractionally so the game fills the screen.
   function resize() {
     const dpr = window.devicePixelRatio || 1;
-    const vw = window.innerWidth, vh = window.innerHeight;
-    let s = Math.floor(Math.min((vw * dpr) / W, (vh * dpr) / H));
-    let cssW, cssH;
-    if (s >= 1) { cssW = (W * s) / dpr; cssH = (H * s) / dpr; }
-    else { const f = Math.min(vw / W, vh / H); cssW = W * f; cssH = H * f; }
-    canvas.style.width = cssW + 'px';
-    canvas.style.height = cssH + 'px';
-    document.body.classList.toggle('portrait', vh > vw && vw < 900);
+    const cs = getComputedStyle(document.body);
+    const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+    const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+    const vw = window.innerWidth - (padX || 0), vh = window.innerHeight - (padY || 0);
+    const fit = Math.min(vw / W, vh / H);
+    const crisp = Math.floor(fit * dpr) / dpr;
+    const s = crisp >= fit * 0.97 && crisp > 0 ? crisp : fit;
+    canvas.style.width = Math.floor(W * s) + 'px';
+    canvas.style.height = Math.floor(H * s) + 'px';
+    document.body.classList.toggle('portrait', window.innerHeight > window.innerWidth && window.innerWidth < 900);
   }
   window.addEventListener('resize', resize);
   window.addEventListener('orientationchange', () => setTimeout(resize, 150));
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', resize);
   resize();
+
+  const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const standalone = window.navigator.standalone === true || (window.matchMedia && window.matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches);
 
   // ---- Input: touch, mouse, keyboard and gamepad feed one state object. ----
   const input = {
@@ -74,6 +82,8 @@ window.SB = window.SB || {};
   canvas.addEventListener('pointercancel', endPointer);
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
   canvas.addEventListener('touchend', () => SB.audioUnlock && SB.audioUnlock(), { passive: true });
+  canvas.addEventListener('click', () => SB.audioUnlock && SB.audioUnlock());
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) resize(); });
 
   const KEYMAP = {
     ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down',
@@ -173,6 +183,6 @@ window.SB = window.SB || {};
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
 
   SB.W = W; SB.H = H; SB.ctx = ctx; SB.canvas = canvas;
-  SB.input = input; SB.setScene = setScene; SB.drawSpeaker = drawSpeaker; SB.inRect = inRect; SB.rand = rand; SB.clamp = clamp;
+  SB.input = input; SB.setScene = setScene; SB.drawSpeaker = drawSpeaker; SB.isIOS = isIOS; SB.standalone = standalone; SB.inRect = inRect; SB.rand = rand; SB.clamp = clamp;
   SB.start = function (firstScene) { setScene(firstScene); requestAnimationFrame((t) => { last = t; frame(t); }); };
 })(window.SB);

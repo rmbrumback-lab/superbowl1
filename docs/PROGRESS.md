@@ -1,5 +1,11 @@
 # Progress log
 
+## 2026-11-12 — v0.3.1: iPhone full screen + sound
+
+- Scales to fill the screen (fractional when integer scaling would waste space), respects notch safe areas, uses dynamic viewport height.
+- Add to Home Screen opens full screen (web manifest, apple-touch-icon, standalone meta); menu shows the tip on iPhone Safari.
+- Sound on iPhone: audio session set to playback (ignores the silent switch on iOS 17+), silent-buffer unlock inside the tap, looping silent audio element for older iOS.
+
 ## 2026-11-12 — v0.3.0: licensing-clean build, published for family testing
 
 - QB is now Noah Brumback #9 (with permission); WR is invented (Devon Chastain #1). Home team renamed River City Tigers (same orange/black). Backup roster names replaced with invented ones.
