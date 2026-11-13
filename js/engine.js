@@ -57,14 +57,21 @@ window.SB = window.SB || {};
     const p = toGame(e);
     if (input.pointer.down) return; // track first pointer only
     try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* noop */ }
-    Object.assign(input.pointer, { down: true, x: p.x, y: p.y, startX: p.x, startY: p.y, startT: performance.now(), id: e.pointerId });
+    Object.assign(input.pointer, { down: true, swiped: false, x: p.x, y: p.y, startX: p.x, startY: p.y, startT: performance.now(), id: e.pointerId });
     input.downs.push({ x: p.x, y: p.y });
   });
   canvas.addEventListener('pointermove', (e) => {
     const p = toGame(e);
     if (input.pointer.down && e.pointerId !== input.pointer.id) return;
     input.pointer.x = p.x; input.pointer.y = p.y;
-    if (!input.pointer.down) { input.pointer.hoverX = p.x; input.pointer.hoverY = p.y; }
+    if (!input.pointer.down) { input.pointer.hoverX = p.x; input.pointer.hoverY = p.y; return; }
+    // Early swipe: a quick flick registers mid-gesture, so jukes feel instant.
+    if (!input.pointer.swiped) {
+      const dx = p.x - input.pointer.startX, dy = p.y - input.pointer.startY;
+      if (performance.now() - input.pointer.startT < 250 && Math.hypot(dx, dy) >= 12) {
+        input.swipes.push({ dx, dy }); input.pointer.swiped = true;
+      }
+    }
   });
   function endPointer(e) {
     SB.audioUnlock && SB.audioUnlock(); // iOS Safari only unlocks audio on touch release
@@ -75,8 +82,8 @@ window.SB = window.SB || {};
     const dist = Math.hypot(dx, dy);
     input.ups.push({ x: p.x, y: p.y, dx, dy, dt });
     if (dt < 260 && dist < 8) input.taps.push({ x: p.x, y: p.y });
-    else if (dt < 260 && dist >= 14) input.swipes.push({ dx, dy });
-    input.pointer.down = false; input.pointer.id = null;
+    else if (!input.pointer.swiped && dt < 260 && dist >= 14) input.swipes.push({ dx, dy });
+    input.pointer.down = false; input.pointer.id = null; input.pointer.swiped = false;
   }
   canvas.addEventListener('pointerup', endPointer);
   canvas.addEventListener('pointercancel', endPointer);

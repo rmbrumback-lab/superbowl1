@@ -37,7 +37,7 @@ window.SB = window.SB || {};
     const p = Object.assign({
       team, role, x, y, num, vx: 0, vy: 0, facing: team === 'O' ? 1 : -1, anim: 0,
       speed: TU().speed[role], route: [], ri: 0, routeEnd: 'stop', mode: 'idle',
-      stunT: 0, blockedT: 0, jukeT: 0, jukeCd: 0, brokeT: 0, down: false,
+      stunT: 0, blockedT: 0, jukeT: 0, jukeCd: 0, brokeT: 0, stutterT: 0, stutterCd: 0, diveT: 0, diving: false, down: false,
       skin: SKINS[(Math.random() * SKINS.length) | 0]
     }, extra || {});
     S.players.push(p);
@@ -565,6 +565,27 @@ window.SB = window.SB || {};
     for (const d of S.defense) if (dist(d, p) < 2.8 && Math.random() < 0.55) d.stunT = 0.6;
   }
 
+  /** Swipe back: stutter step. Runner hesitates; defenders closing fast can overrun. */
+  function stutter(p) {
+    if (p.stutterCd > 0) return;
+    p.stutterT = 0.45; p.stutterCd = 0.9;
+    SB.audio.play('juke');
+    for (const d of S.defense) {
+      const dd = dist(d, p);
+      const closing = (d.vx * (p.x - d.x) + d.vy * (p.y - d.y)) / (dd || 1);
+      if (dd < 3.6 && closing > 3 && Math.random() < 0.5) d.stunT = 0.4;
+    }
+  }
+
+  /** Swipe forward: dive. Lunges ~2 yards; can't be tackled mid-air; play ends where he lands. */
+  function dive(p) {
+    if (p.diveT > 0 || p.diving) return;
+    p.diving = true; p.diveT = 0.32;
+    p.vx = p.speed * 1.25; p.vy *= 0.3;
+    SB.audio.play('juke');
+    S.flash = { text: 'DIVE!', t: 0.6 };
+  }
+
   function controlRunner(p, dt) {
     const inp = SB.input;
     let dx = 1, dy = 0;
@@ -579,11 +600,24 @@ window.SB = window.SB || {};
     }
     if (inp.pressed.jukeUp) juke(p, -1);
     if (inp.pressed.jukeDown) juke(p, 1);
-    for (const s of inp.swipes) if (Math.abs(s.dy) > Math.abs(s.dx) * 0.8) juke(p, s.dy < 0 ? -1 : 1);
+    if (inp.pressed.dive) dive(p);
+    // Retro Bowl swipes: up/down = juke, back = stutter, forward = dive.
+    for (const s of inp.swipes) {
+      if (Math.abs(s.dy) > Math.abs(s.dx) * 0.8) juke(p, s.dy < 0 ? -1 : 1);
+      else if (s.dx > 0) dive(p);
+      else stutter(p);
+    }
+    if (p.diving) {
+      p.diveT -= dt;
+      p.vx *= Math.pow(0.4, dt); p.vy *= Math.pow(0.2, dt);
+      integrate(p, dt);
+      return;
+    }
 
     let n = Math.hypot(dx, dy) || 1; dx /= n; dy /= n;
     let spd = p.speed * (p.brokeT > 0 ? 1.15 : 1);
     if (p.jukeT > 0) { dx = 0.65; dy = p.jukeDir; n = Math.hypot(dx, dy); dx /= n; dy /= n; spd *= 1.35; }
+    if (p.stutterT > 0) spd *= 0.3;
     const k = Math.min(1, dt * 10);
     p.vx += (dx * spd - p.vx) * k; p.vy += (dy * spd - p.vy) * k;
     integrate(p, dt);
@@ -735,7 +769,7 @@ window.SB = window.SB || {};
     for (const d of inp.downs) {
       if (SB.inRect(d, PAUSE_BTN)) continue;
       if (S.qbPhase) { S.aiming = true; S.aim = toWorld(d.x, d.y); }
-      else if (S.carrier && S.carrier.team === 'O') S.stickActive = true;
+      else if (S.carrier && S.carrier.team === 'O' && SB.input.lastDevice !== 'touch') S.stickActive = true;
     }
 
     if (S.qbPhase) {
@@ -760,6 +794,8 @@ window.SB = window.SB || {};
       if (p.jukeT > 0) p.jukeT -= dt;
       if (p.jukeCd > 0) p.jukeCd -= dt;
       if (p.brokeT > 0) p.brokeT -= dt;
+      if (p.stutterT > 0) p.stutterT -= dt;
+      if (p.stutterCd > 0) p.stutterCd -= dt;
       if (p === S.carrier && p.team === 'O') {
         if (p === QB && S.qbPhase) {
           // QB: auto drop-back, or player-moved with keys / stick.
@@ -800,6 +836,10 @@ window.SB = window.SB || {};
     if (c.x >= 110) return endPlay({ type: 'td' });
     if (c.y < 0 || c.y > FW) return endPlay({ type: 'oob', x: c.x });
     if (c.x <= 10) return endPlay({ type: 'safety' });
+    if (c.diving) {
+      if (c.diveT <= 0) return endPlay({ type: 'tackle', x: c.x });
+      return; // airborne: can't be tackled
+    }
     for (const d of S.defense) {
       if (d.stunT > 0 || d.blockedT > 0) continue;
       if (dist(d, c) < TU().tackleRadius) {
@@ -1208,10 +1248,10 @@ window.SB = window.SB || {};
       if (S.qbPhase) hint = touch ? 'DRAG TO AIM, RELEASE TO THROW. TAP A RECEIVER.' : 'CLICK-DRAG TO AIM  *  1-4 QUICK THROW  *  WASD MOVE';
       else if (S.carrier && S.carrier.team === 'O') {
         const gain = Math.round(S.carrier.x - S.los);
-        hint = (S.carrier.name || '#' + S.carrier.num) + '  ' + (gain >= 0 ? '+' : '') + gain + '   ' + (touch ? 'DRAG TO STEER * SWIPE TO JUKE' : 'WASD STEER * Q/E JUKE');
+        hint = (S.carrier.name || '#' + S.carrier.num) + ' ' + (gain >= 0 ? '+' : '') + gain + '  ' + (touch ? 'SWIPE: UP/DN JUKE * BACK STUTTER * FWD DIVE' : 'WASD STEER * Q/E JUKE * SHIFT DIVE');
       } else hint = 'BALL IN THE AIR...';
     } else if (S.phase === 'presnap') {
-      hint = S.play.type === 'run' ? (touch ? 'RUN: DRAG TO STEER, SWIPE UP/DOWN TO JUKE' : 'RUN: WASD TO STEER, Q/E TO JUKE')
+      hint = S.play.type === 'run' ? (touch ? 'HE RUNS ON HIS OWN. SWIPE UP/DOWN, BACK OR FORWARD' : 'RUN: WASD STEER, Q/E JUKE, SHIFT DIVE')
         : (touch ? 'PASS: DRAG TO AIM, RELEASE TO THROW' : 'PASS: CLICK-DRAG TO AIM OR PRESS 1-4');
     } else if (S.phase === 'select') {
       hint = touch ? 'TAP A PLAY' : 'CLICK A PLAY  *  KEYS 1-4  *  ARROWS + ENTER';

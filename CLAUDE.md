@@ -16,6 +16,7 @@ Retro (Tecmo / Retro Bowl style) browser football game with a decision-driven fr
 - `npm install` then `npx playwright install chromium` (one time), then `npm test`.
 - `tests/smoke.mjs`: boots to drive practice, plays several downs, fails on any page error.
 - `tests/quickgame.mjs [--2p]`: plays a full quick game with 25 s quarters; must reach the final screen with no errors.
+- `tests/touch-run.mjs`: emulated iPhone; checks juke / stutter / dive swipes on a run play.
 - `tests/pass-balance.mjs`: throws ~36 passes and prints the outcome mix (target: roughly 50-65% complete, few INTs).
 - `SB._debugState()` (in `js/field.js`) exposes field-scene state to tests.
 

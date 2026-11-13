@@ -1,6 +1,6 @@
 {
   "name": "superbowl1",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "private": true,
   "description": "Retro football with a decision-driven franchise mode (personal project).",
   "type": "module",
@@ -8,7 +8,8 @@
     "start": "python -m http.server 8000",
     "test": "node tests/smoke.mjs && node tests/quickgame.mjs",
     "test:balance": "node tests/pass-balance.mjs",
-    "test:quick2p": "node tests/quickgame.mjs --2p"
+    "test:quick2p": "node tests/quickgame.mjs --2p",
+    "test:touch": "node tests/touch-run.mjs"
   },
   "devDependencies": {
     "playwright": "^1.50.0"

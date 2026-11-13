@@ -1,5 +1,11 @@
 # Progress log
 
+## 2026-11-12 — v0.3.3: Retro Bowl-style touch running
+
+- On touch screens the ball carrier runs forward on his own; swipe up/down to juke, back to stutter step (defenders closing fast can overrun), forward to dive (about 2 yards, can't be tackled mid-air, play ends where he lands). Swipes register mid-gesture.
+- Drag-to-steer joystick kept for mouse only; keyboard adds Shift = dive; gamepad Y = dive.
+- New test: `tests/touch-run.mjs` (emulated iPhone swipes).
+
 ## 2026-11-12 — v0.3.2: copyright line
 
 - "COPYRIGHT © 2026 NOAH BRUMBACK" on the start screen and main menu (new © glyph in the pixel font; text in `SB.copyright`, js/config.js).

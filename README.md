@@ -16,8 +16,10 @@ Retro football with a decision-driven franchise mode (in development). Current b
 | Snap | Tap | Space or click | A |
 | Throw | Drag to aim, release (or tap a receiver) | Click-drag-release, or 1-4 quick throw | Right stick aim + RT |
 | Move QB | (aim only) | WASD / arrows | Left stick |
-| Steer runner | Drag anywhere (virtual stick) | WASD / arrows | Left stick |
-| Juke | Swipe up / down | Q / E | X / B |
+| Run with the ball | Runs forward on his own (Retro Bowl style) | WASD / arrows to steer | Left stick |
+| Juke / sidestep | Swipe up or down | Q / E | X / B |
+| Stutter step | Swipe back | Steer back | |
+| Dive | Swipe forward | Shift | Y |
 | Field goal / punt | Tap button | F / U | |
 | Pause | Top-right button | Esc or P | Start |
 | Sound on/off | Speaker button | M | |
