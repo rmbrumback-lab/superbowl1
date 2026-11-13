@@ -1,5 +1,9 @@
 # Progress log
 
+## 2026-11-12 — v0.3.2: copyright line
+
+- "COPYRIGHT © 2026 NOAH BRUMBACK" on the start screen and main menu (new © glyph in the pixel font; text in `SB.copyright`, js/config.js).
+
 ## 2026-11-12 — v0.3.1: iPhone full screen + sound
 
 - Scales to fill the screen (fractional when integer scaling would waste space), respects notch safe areas, uses dynamic viewport height.

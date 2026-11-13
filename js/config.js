@@ -32,6 +32,9 @@ window.SB = window.SB || {};
     }
   };
 
+  // Shown on the start screen and main menu.
+  SB.copyright = 'COPYRIGHT \u00A9 2026 NOAH BRUMBACK';
+
   // Fictional league teams.
   SB.teams = {
     home: {

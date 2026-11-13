@@ -99,11 +99,11 @@ window.SB = window.SB || {};
       const celebrate = t < this.celebrateUntil;
       const fr = Math.floor(t * 8);
       const L = this.idle.left, R = this.idle.right;
-      SB.sprites.drawDuoPlayer(ctx, 143, 168, 2, duo.left, U, {
+      SB.sprites.drawDuoPlayer(ctx, 143, 162, 2, duo.left, U, {
         breath: Math.floor(t * 1.3) % 2, look: t < L.lookEnd ? 1 : 0,
         fidget: t < L.fidgetEnd, celebrate, frame: Math.floor(t * 6)
       });
-      SB.sprites.drawDuoPlayer(ctx, 241, 168, 2, duo.right, U, {
+      SB.sprites.drawDuoPlayer(ctx, 241, 162, 2, duo.right, U, {
         breath: Math.floor(t * 1.3 + 0.5) % 2, look: t < R.lookEnd ? -1 : 0,
         fidget: t < R.fidgetEnd, celebrate, frame: fr
       });
@@ -113,11 +113,11 @@ window.SB = window.SB || {};
 
       // Tip line
       const tip = 'TIP: ' + SB.tips[this.tipIdx];
-      F().drawText(ctx, tip.slice(0, 62), W / 2, 195, '#cfc7b8', { align: 'center', shadow: '#000' });
+      F().drawText(ctx, tip.slice(0, 62), W / 2, 188, '#cfc7b8', { align: 'center', shadow: '#000' });
 
       // Progress bar or start prompt
       if (!this.loaded) {
-        const segs = 20, sw = 8, gap = 2, bw = segs * (sw + gap) - gap, bx = Math.round(W / 2 - bw / 2) - 14, by = 205;
+        const segs = 20, sw = 8, gap = 2, bw = segs * (sw + gap) - gap, bx = Math.round(W / 2 - bw / 2) - 14, by = 198;
         const filled = Math.floor(this.shownProgress * segs + 0.0001);
         for (let i = 0; i < segs; i++) {
           ctx.fillStyle = '#000';
@@ -128,13 +128,16 @@ window.SB = window.SB || {};
         F().drawText(ctx, Math.round(this.shownProgress * 100) + '%', bx + bw + 8, by - 1, '#e9e2d6', { shadow: '#000' });
       } else if (Math.floor(t * 2.2) % 2 === 0) {
         const msg = SB.input.lastDevice === 'touch' ? 'TAP TO START' : 'PRESS START  (ENTER / CLICK)';
-        F().drawText(ctx, msg, W / 2, 205, '#ffffff', { align: 'center', shadow: '#7a2e05' });
+        F().drawText(ctx, msg, W / 2, 198, '#ffffff', { align: 'center', shadow: '#7a2e05' });
+      }
+      if (SB.copyright) {
+        F().drawText(ctx, SB.copyright, W / 2, 208, '#9a8f80', { align: 'center', shadow: '#000' });
       }
     }
   };
 
   function plate(ctx, cx, P) {
-    const w = 96, h = 18, x = Math.round(cx - w / 2), y = 172;
+    const w = 96, h = 18, x = Math.round(cx - w / 2), y = 166;
     ctx.fillStyle = '#f26a1b'; ctx.fillRect(x - 1, y - 1, w + 2, h + 2);
     ctx.fillStyle = '#0d0d0f'; ctx.fillRect(x, y, w, h);
     ctx.fillStyle = '#f26a1b'; ctx.fillRect(x, y, 3, h);

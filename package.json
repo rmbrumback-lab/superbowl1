@@ -1,6 +1,6 @@
 {
   "name": "superbowl1",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "private": true,
   "description": "Retro football with a decision-driven franchise mode (personal project).",
   "type": "module",

@@ -56,14 +56,15 @@ window.SB = window.SB || {};
         F().drawText(ctx, it.label, W / 2, r.y + 6, f ? '#ffb070' : '#ffffff', { align: 'center' });
       });
       const sub = list[this.focus].sub;
-      F().drawText(ctx, sub, W / 2, 172, '#cfc7b8', { align: 'center', shadow: '#000' });
+      F().drawText(ctx, sub, W / 2, 168, '#cfc7b8', { align: 'center', shadow: '#000' });
       const touch = SB.input.lastDevice === 'touch';
       if (SB.isIOS && !SB.standalone) {
-        F().drawText(ctx, 'FULL SCREEN: TAP SHARE, THEN ADD TO HOME SCREEN', W / 2, 190, '#ffd23c', { align: 'center', shadow: '#000' });
-        F().drawText(ctx, 'NO SOUND? CHECK VOLUME, THEN TAP ANYWHERE', W / 2, 202, '#8a8a96', { align: 'center' });
+        F().drawText(ctx, 'FULL SCREEN: TAP SHARE, THEN ADD TO HOME SCREEN', W / 2, 183, '#ffd23c', { align: 'center', shadow: '#000' });
+        F().drawText(ctx, 'NO SOUND? CHECK VOLUME, THEN TAP ANYWHERE', W / 2, 194, '#8a8a96', { align: 'center' });
       } else {
-        F().drawText(ctx, touch ? 'TAP TO CHOOSE' : 'ARROWS + ENTER  *  CLICK  *  M: SOUND', W / 2, 200, '#8a8a96', { align: 'center' });
+        F().drawText(ctx, touch ? 'TAP TO CHOOSE' : 'ARROWS + ENTER  *  CLICK  *  M: SOUND', W / 2, 192, '#8a8a96', { align: 'center' });
       }
+      if (SB.copyright) F().drawText(ctx, SB.copyright, W / 2, 207, '#9a8f80', { align: 'center' });
       SB.drawSpeaker(ctx, SPK.x, SPK.y);
     }
   };
